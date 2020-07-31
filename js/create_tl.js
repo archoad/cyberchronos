@@ -1,7 +1,8 @@
-let additionalOptions = {
+let chronosOptions = {
 	start_at_end: true,
 	timenav_height: 250,
-	hash_bookmark: false
+	hash_bookmark: true,
+	timenav_position: 'bottom'
 }
 
-window.timeline = new TL.Timeline('timeline', './data/data.json', additionalOptions);
+let chronos = new TL.Timeline('timeline', './data/data.json', chronosOptions);

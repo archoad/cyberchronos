@@ -11,7 +11,6 @@ html, body {
 	overflow: hidden;
 	height:100%;
 	font-size: 100%;
-	background-color: #333333;
 }
 
 #timeline {
@@ -20,34 +19,54 @@ html, body {
 }
 
 #addevent {
-	width: 60%;
+	width: 80%;
 	margin: auto;
 	font-family: Conso;
 	font-size: 0.80rem;
 }
 
-p.addform {
-	font: inherit;
-	color: tomato;
+table.addform {
+	width: 100%;
+}
+
+tr.addform {
+	text-align: center;
+}
+
+img.addform {
+	background-color: #cfd0d2;
 }
 
 textarea.addform {
 	font: inherit;
-	width: 100%;
+	color: inherit;
+	width: 90%;
 	height: 100px;
 	resize: none;
 	line-height: 1.25rem;
-	border: 1px solid #cccccc;
+	border: 1px solid #cfd0d2;
 	box-shadow: inset 0 1px 3px #dddddd;
 	border-radius: 4px;
 }
 
 input.addform {
 	font: inherit;
+	color: inherit;
 	line-height: normal;
-	border: 1px solid #cccccc;
+	border: 1px solid #cfd0d2;
 	box-shadow: inset 0 1px 3px #dddddd;
 	border-radius: 4px;
 	vertical-align: middle;
 	box-sizing: border-box;
+}
+
+
+fieldset.addform {
+	margin: 4px 4px;
+	padding: 0px 0px;
+	border-radius: 4px;
+}
+
+legend.addform {
+	padding: 0px 5px;
 }

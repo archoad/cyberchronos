@@ -24,6 +24,11 @@ https://github.com/x0rz/phishing_catcher
 =========================================================*/
 
 
+$server_path = dirname($_SERVER['SCRIPT_FILENAME']);
+$cheminDATA = sprintf("%s/data/", $server_path);
+$logo = './pictures/logoArchoad.png';
+
+
 function genNonce($length) {
 	$nonce = random_bytes($length);
 	$b64 = base64_encode($nonce);
@@ -63,12 +68,14 @@ function genCaptcha() {
 
 function headPage() {
 	$_SESSION['nonce'] = genNonce(8);
-	header("cache-control: no-cache, must-revalidate");
-	header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
-	header("Content-type: text/html; charset=utf-8");
+	header('Cache-Control: no-store, no-cache, must-revalidate');
+	header('Cache-Control: post-check=0, pre-check=0', false);
+	header('Pragma: no-cache');
+	header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+	header('Content-type: text/html; charset=utf-8');
 	header('X-Content-Type-Options: "nosniff"');
-	header("X-XSS-Protection: 1; mode=block");
-	header("X-Frame-Options: deny");
+	header('X-XSS-Protection: 1; mode=block');
+	header('X-Frame-Options: deny');
 	printf("<!DOCTYPE html><html lang='fr-FR'><head>");
 	printf("<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>");
 	printf("<title>Cybersecurity incident timeline</title>");
@@ -107,16 +114,20 @@ function addEvent() {
 	$captcha = genCaptcha();
 	$today = date('Y-m-d', time());
 	printf("<div id='addevent'>");
-	printf("<form method='post' action='cyberchronos.php'><table>");
-	printf("<tr><td colspan='2'><input class='addform' type='text' size='100' maxlength='100' name='title' id='title' placeholder='Titre' required></td></tr>");
-	printf("<tr><td colspan='2'><textarea class='addform' id='story' name='story' placeholder='Détails' required></textarea></td></tr>");
-	printf("<tr><td colspan='2'><input class='addform' type='url' name='url' id='url' size='100' placeholder='URL de la source' pattern='https://.*' required></td></tr>");
-	printf("<tr><td><p class='addform'>Date de début&nbsp;<input class='addform' type='date' name='datedebut' id='datedebut' required></p></td>");
-	printf("<td><p class='addform'>Date de fin&nbsp;<input class='addform' type='date' name='datefin' id='datefin'></p></td></tr>");
-	printf("<tr><td><img src='data:image/png;base64,%s' alt='captcha'/>&nbsp;", $captcha);
-	printf("<input class='addform' type='text' size='10' maxlength='10' name='captcha' id='captcha' placeholder='Résultat' required></td>");
-	printf("<td><input class='button' type='submit' value='Valider'></td></tr>");
-	printf("</table></form>");
+	printf("<form method='post' action='cyberchronos.php'>");
+	printf("<fieldset class='addform'><legend class='addform'>Détails de l'incident</legend>");
+	printf("<table class='addform'>");
+	printf("<tr class='addform'><td colspan='2'><input class='addform' type='text' size='100' maxlength='100' name='title' id='title' placeholder='Titre' required></td></tr>");
+	printf("<tr class='addform'><td colspan='2'><textarea class='addform' id='story' name='story' placeholder='Détails' required></textarea></td></tr>");
+	printf("<tr class='addform'><td colspan='2'><input class='addform' type='url' name='url' id='url' size='100' placeholder='URL de la source (https://www.example.com)' pattern='https://.*'></td></tr>");
+	printf("<tr class='addform'><td>Date de début&nbsp;<input class='addform' type='date' name='datedebut' id='datedebut' required></td>");
+	printf("<td>Date de fin&nbsp;<input class='addform' type='date' name='datefin' id='datefin'></td></tr></table></fieldset>");
+	printf("<fieldset class='addform'><legend class='addform'>Enregistrement</legend>");
+	printf("<table class='addform'>");
+	printf("<tr class='addform'><td><img class='addform' src='data:image/png;base64,%s' alt='captcha'/></td>", $captcha);
+	printf("<td><input class='addform' type='text' size='10' maxlength='10' name='captcha' id='captcha' placeholder='Résultat' required></td>");
+	printf("<td>&nbsp;</td><td><input class='addform' type='submit' value='Valider'></td></tr>");
+	printf("</table></fieldset></form>");
 	printf("</div>");
 	printf("<script nonce='%s'>document.getElementById('datedebut').addEventListener('change', function() {fixMinDate();});</script>\n", $_SESSION['nonce']);
 }
@@ -128,23 +139,156 @@ function displayTimeline() {
 }
 
 
+function getJsonFile($filename) {
+	global $cheminDATA;
+	$jsonFile = sprintf("%s%s", $cheminDATA, $filename);
+	$jsonSource = file_get_contents($jsonFile);
+	return json_decode($jsonSource, true);
+}
+
+
+function genTitle() {
+	global $logo;
+	$year = date('Y');
+	$text = [];
+	$text['headline'] = 'Incidents de cybersécurité';
+	$text['text'] = sprintf("Année %s", $year);
+	$media = [];
+	$media['url'] = $logo;
+	$title = [];
+	$title['media'] = $media;
+	$title['text'] = $text;
+	return $title;
+}
+
+
+function genEras() {
+	$year = date('Y');
+	$result = [];
+	for ($i=1; $i<=12; $i++) {
+		$date = sprintf("%s-%d-1", $year, $i);
+		$d = new DateTime($date);
+		$temp = [];
+		$temp['start_date'] = ['year'=>$year, 'month'=>$i, 'day'=>1];
+		$temp['end_date'] = ['year'=>$year, 'month'=>$i, 'day'=>$d->format('t')];
+		$temp['text'] = ['headline'=>''];
+		$result[] = $temp;
+	}
+	return $result;
+}
+
+
+function genEvent($url, $headline, $text, $start, $end) {
+	$start = explode('-', $start);
+	$end = explode('-', $end);
+	$json = [];
+	$json['start_date'] = ['year'=>$start[0], 'month'=>$start[1], 'day'=>$start[2]];
+	$json['end_date'] = ['year'=>$end[0], 'month'=>$end[1], 'day'=>$end[2]];
+	$json['media'] = ['url'=>$url];
+	$json['text'] = ['headline'=>$headline, 'text'=>$text];
+	$json['group'] = 'Interne';
+	//$json['background'] = ['color'=>#2244aa];
+	return $json;
+}
+
+
+function writeJsonEvent($json) {
+	global $cheminDATA;
+	$date = date('Y-m-d');
+	$rand = md5(microtime());
+	$jsonFile = sprintf("%s%s-%s.json", $cheminDATA, $date, $rand);
+	$fp = fopen($jsonFile, 'w');
+	fwrite($fp, json_encode($json, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT));
+	fclose($fp);
+}
+
+
+function isCurrentYearJsonFile($filename) {
+	$result = false;
+	$year = date('Y');
+	if ((!is_dir($filename)) || (pathinfo($filename,  PATHINFO_EXTENSION) === 'json')) {
+		if (explode('-', $filename)[0] === $year) {
+			$result =  true;
+		}
+	}
+	return $result;
+}
+
+
+function isTherEventsForThisyear() {
+	global $cheminDATA;
+	$nbrEvent = 0;
+	$handle = opendir($cheminDATA);
+	while (false !== ($entry = readdir($handle))) {
+		if (isCurrentYearJsonFile($entry)) {
+			$nbrEvent++;
+		}
+	}
+	closedir($handle);
+	if (!$nbrEvent) { // Create an empty event
+		genFirstEvent();
+	}
+}
+
+
+function genFirstEvent() {
+	$year = date('Y');
+	$title = "Timeline des incidents cyber";
+	$text = "Cyberchronos permet de réaliser un suivi des incidents internes et externes. Vous pouvez rajouter des incidents en remplissant le formulaire ci-dessous.";
+	$start = sprintf("%s-01-01", $year);
+	$end = sprintf("%s-01-01", $year);
+	$json = genEvent("", $title, $text, $start, $end);
+	writeJsonEvent($json);
+}
+
+
+function genJsonFile() {
+	global $cheminDATA;
+
+	$jsonFile = sprintf("%s%s", $cheminDATA, 'data.json');
+	$json = [];
+	$json['title'] = genTitle();
+	$json['eras'] = genEras();
+	$json['events'] = [];
+	$handle = opendir($cheminDATA);
+	while (false !== ($entry = readdir($handle))) {
+		if (isCurrentYearJsonFile($entry)) {
+			$json['events'][] = getJsonFile($entry);
+		}
+	}
+	closedir($handle);
+	$fp = fopen($jsonFile, 'w');
+	fwrite($fp, json_encode($json, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT));
+	fclose($fp);
+}
+
+
 function computeEvents($data) {
-	print_r($data);
+	$title = filter_var(trim($_POST['title']), FILTER_SANITIZE_STRING|FILTER_SANITIZE_ENCODED);
+	$story = filter_var(trim($_POST['story']), FILTER_SANITIZE_STRING|FILTER_SANITIZE_ENCODED);
+	$url = filter_var(trim($_POST['url']), FILTER_SANITIZE_URL);
+	$datedebut = trim($_POST['datedebut']);
+	if ($_POST['datefin']==="") { $datefin = $datedebut; } else { $datefin = trim($_POST['datefin']); }
+	$json = genEvent($url, $title, $story, $datedebut, $datefin);
+	writeJsonEvent($json);
 }
 
 
 session_start();
 if (isset($_POST['captcha'])) {
 	if (validateCaptcha($_POST['captcha'])) {
+		computeEvents($_POST);
+		genJsonFile();
 		headPage();
 		displayTimeline();
-		computeEvents($_POST);
 		addEvent();
 		footPage();
 	} else {
 		destroySession();
 	}
 } else {
+	isTherEventsForThisyear();
+	genJsonFile();
 	headPage();
 	displayTimeline();
 	addEvent();
