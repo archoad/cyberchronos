@@ -1,0 +1,20 @@
+{
+    "start_date": {
+        "year": "2020",
+        "month": "01",
+        "day": "01"
+    },
+    "end_date": {
+        "year": "2020",
+        "month": "01",
+        "day": "01"
+    },
+    "media": {
+        "url": ""
+    },
+    "text": {
+        "headline": "Timeline des incidents cyber",
+        "text": "Cyberchronos permet de r\u00e9aliser un suivi des incidents internes et externes. Vous pouvez rajouter des incidents en remplissant le formulaire ci-dessous."
+    },
+    "group": "Interne"
+}
