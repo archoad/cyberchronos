@@ -115,7 +115,7 @@ function headPage() {
 	printf("<link href='css/style.css' rel='StyleSheet' type='text/css' />");
 	printf("<link href='css/timeline.css' rel='StyleSheet' type='text/css' />");
 	printf("<script nonce='%s' src='js/timeline.min.js'></script>", $_SESSION['nonce']);
-	printf("<script nonce='%s' src='js/app.js'></script>", $_SESSION['nonce']);
+	printf("<script nonce='%s' src='js/cyberchronos.js'></script>", $_SESSION['nonce']);
 	printf("<script nonce='%s' src='js/create_tl.js'></script>", $_SESSION['nonce']);
 	printf("</head><body>");
 }
@@ -145,24 +145,35 @@ function destroySession() {
 
 
 function addEvent() {
+	printf("<div id='addevent'>");
+	printf("<a id='buttonAddEvent' class='add_event'>Ajouter un incident</a>");
+	printf("</div>");
+	displayAddEventForm();
+	printf("<script nonce='%s'>document.getElementById('buttonAddEvent').addEventListener('click', function() {displayAddModal();});</script>\n", $_SESSION['nonce']);
+}
+
+
+function displayAddEventForm() {
 	$captcha = genCaptcha();
 	$today = date('Y-m-d', time());
-	printf("<div id='addevent'>");
+	printf("<div id='add_event_form' class='add_event_modal'>");
+	printf("<div class='add_event_modal_content'>");
 	printf("<form method='post' action='cyberchronos.php'>");
 	printf("<div class='gridwrapper'>");
 	printf("<div class='gridtitle'><input class='addform' type='text' maxlength='120' name='title' id='title' placeholder='Titre' required></div>");
-	printf("<div class='gridurl'><input class='addform' type='url' maxlength='120' name='url' id='url' placeholder='URL de la source (https://www.example.com)' pattern='https://.*'></div>");
+	printf("<div class='gridurl'><input class='addform' type='url' maxlength='500' name='url' id='url' placeholder='URL de la source (https://www.example.com)' pattern='https://.*'></div>");
 	printf("<div class='gridinfo'><textarea class='addform' id='story' name='story' placeholder='Détails' required></textarea></div>");
 	printf("<div class='griddatedeb1'><p class='addform'>Date de début</p></div>");
 	printf("<div class='griddatedeb2'><input class='addform' type='date' name='datedebut' id='datedebut' required></div>");
 	printf("<div class='griddatefin1'><p class='addform'>Date de fin</p></div>");
 	printf("<div class='griddatefin2'><input class='addform' type='date' name='datefin' id='datefin'></div>");
+	printf("<div class='gridgroup'><input type='checkbox' id='group' name='group'>&nbsp;Incident interne</div>");
 	printf("<div class='gridimgcaptcha'><img class='addform' src='data:image/png;base64,%s' alt='captcha'/></div>", $captcha);
 	printf("<div class='gridresultcaptcha'><input class='addform' type='text' size='10' maxlength='10' name='captcha' id='captcha' placeholder='Résultat' required></div>");
 	printf("<div class='gridrecord'><input class='addform' type='submit' value='Valider'></div>");
 	printf("</div>");
 	printf("</form>");
-	printf("</div>");
+	printf("</div></div>");
 	printf("<script nonce='%s'>document.getElementById('datedebut').addEventListener('change', function() {fixMinDate();});</script>\n", $_SESSION['nonce']);
 }
 
@@ -216,16 +227,52 @@ function genEras() {
 }
 
 
-function genEvent($url, $headline, $text, $start, $end) {
-	$start = explode('-', $start);
-	$end = explode('-', $end);
+function genImgFromURL($url) {
+	$googleApi = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
+	$query = array(
+		'key' => 'AIzaSyD4ANWdjoLVk4ZZ22A_yIJWQadwq-qjErU',
+		'screenshot' => 'true',
+		'locale' => 'fr',
+		'strategy' => 'desktop',
+		'url' => $url
+	);
+	$fullUrl = sprintf("%s?%s", $googleApi, http_build_query($query));
+	$result = file_get_contents($fullUrl);
+	if ($result === false) {
+		$rawdata = false;
+	} else {
+		$json = json_decode($result, true);
+		$rawdata = $json['lighthouseResult']['audits']['final-screenshot']['details']['data'];
+	}
+	return($rawdata);
+}
+
+
+function genEvent($url, $headline, $text, $start, $end, $group) {
 	$json = [];
+
+	$start = explode('-', $start);
 	$json['start_date'] = ['year'=>$start[0], 'month'=>$start[1], 'day'=>$start[2]];
+
+	$end = explode('-', $end);
 	$json['end_date'] = ['year'=>$end[0], 'month'=>$end[1], 'day'=>$end[2]];
-	$json['media'] = ['url'=>$url];
+
+	if (strlen($url) > 1) {
+		$img = genImgFromURL($url);
+		if ($img) {
+			$json['media'] = ['url'=>$img];
+		}
+		$text = sprintf("%s<br />source: %s", $text, $url);
+	}
 	$json['text'] = ['headline'=>$headline, 'text'=>$text];
-	$json['group'] = 'Interne';
-	//$json['background'] = ['color'=>#2244aa];
+
+	if ($group) {
+		$json['group'] = 'Interne';
+		//$json['background'] = ['color'=>'#ce4843'];
+	} else {
+		$json['group'] = 'Externe';
+		//$json['background'] = ['color'=>'#2a55d4'];
+	}
 	return $json;
 }
 
@@ -275,7 +322,7 @@ function genFirstEvent() {
 	$text = "Cyberchronos permet de réaliser un suivi des incidents internes et externes. Vous pouvez rajouter des incidents en remplissant le formulaire ci-dessous.";
 	$start = sprintf("%s-01-01", $year);
 	$end = sprintf("%s-01-01", $year);
-	$json = genEvent("", $title, $text, $start, $end);
+	$json = genEvent("", $title, $text, $start, $end, true);
 	writeJsonEvent($json);
 }
 
@@ -305,9 +352,10 @@ function computeEvents($data) {
 	$title = filter_var(trim($_POST['title']), FILTER_SANITIZE_STRING|FILTER_SANITIZE_ENCODED);
 	$story = filter_var(trim($_POST['story']), FILTER_SANITIZE_STRING|FILTER_SANITIZE_ENCODED);
 	$url = filter_var(trim($_POST['url']), FILTER_SANITIZE_URL);
+	if (isset($_POST['group'])) { $group = true; } else { $group = false; }
 	$datedebut = trim($_POST['datedebut']);
 	if ($_POST['datefin']==="") { $datefin = $datedebut; } else { $datefin = trim($_POST['datefin']); }
-	$json = genEvent($url, $title, $story, $datedebut, $datefin);
+	$json = genEvent($url, $title, $story, $datedebut, $datefin, $group);
 	writeJsonEvent($json);
 }
 
