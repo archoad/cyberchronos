@@ -230,7 +230,7 @@ function genEras() {
 function genImgFromURL($url) {
 	$googleApi = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
 	$query = array(
-		'key' => 'AIzaSyD4ANWdjoLVk4ZZ22A_yIJWQadwq-qjErU',
+		//'key' => 'insert your key here',
 		'screenshot' => 'true',
 		'locale' => 'fr',
 		'strategy' => 'desktop',
@@ -319,7 +319,7 @@ function isTherEventsForThisyear() {
 function genFirstEvent() {
 	$year = date('Y');
 	$title = "Timeline des incidents cyber";
-	$text = "Cyberchronos permet de réaliser un suivi des incidents internes et externes. Vous pouvez rajouter des incidents en remplissant le formulaire ci-dessous.";
+	$text = "Cyberchronos permet de réaliser un suivi des incidents internes et externes. Vous pouvez rajouter des incidents en cliquant sur le bouton 'Ajouter un incident' ci-dessous.";
 	$start = sprintf("%s-01-01", $year);
 	$end = sprintf("%s-01-01", $year);
 	$json = genEvent("", $title, $text, $start, $end, true);
