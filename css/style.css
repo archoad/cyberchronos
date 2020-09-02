@@ -142,8 +142,20 @@ p.addform {
 
 .add_event {
 	padding: 5px 10px;
+	margin: 0 10px;
 	border-radius: 2pt;
 	background-color: #ce4843;
+	cursor: pointer;
+	float: right;
+	font-family: Conso;
+	font-size: 0.80rem;
+}
+
+.refresh_event {
+	padding: 5px 10px;
+	margin: 0 10px;
+	border-radius: 2pt;
+	background-color: #31b7bc;
 	cursor: pointer;
 	float: right;
 	font-family: Conso;

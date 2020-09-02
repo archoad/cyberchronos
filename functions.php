@@ -114,6 +114,7 @@ function headPage() {
 	printf("<title>Cybersecurity incident timeline</title>");
 	printf("<link href='css/style.css' rel='StyleSheet' type='text/css' />");
 	printf("<link href='css/timeline.css' rel='StyleSheet' type='text/css' />");
+	printf("<script nonce='%s' src='js/jquery.min.js'></script>", $_SESSION['nonce']);
 	printf("<script nonce='%s' src='js/timeline.min.js'></script>", $_SESSION['nonce']);
 	printf("<script nonce='%s' src='js/cyberchronos.js'></script>", $_SESSION['nonce']);
 	printf("<script nonce='%s' src='js/create_tl.js'></script>", $_SESSION['nonce']);
@@ -147,9 +148,13 @@ function destroySession() {
 function addEvent() {
 	printf("<div id='addevent'>");
 	printf("<a id='buttonAddEvent' class='add_event'>Ajouter un incident</a>");
+	printf("<a id='buttonRefreshEvent' class='refresh_event'>Rafraîchir la page</a>");
 	printf("</div>");
 	displayAddEventForm();
-	printf("<script nonce='%s'>document.getElementById('buttonAddEvent').addEventListener('click', function() {displayAddModal();});</script>\n", $_SESSION['nonce']);
+	printf("<script nonce='%s'>document.getElementById('buttonAddEvent').addEventListener('click', function() {displayAddModal();});</script>\n",
+	 $_SESSION['nonce']);
+	 printf("<script nonce='%s'>document.getElementById('buttonRefreshEvent').addEventListener('click', function() {refreshPage();});</script>\n",
+ 	 $_SESSION['nonce']);
 }
 
 
@@ -178,13 +183,9 @@ function displayAddEventForm() {
 }
 
 
-function displayTimeline($reload) {
+function displayTimeline() {
 	printf("<div id='timeline'></div>");
-	if ($reload) {
-		printf("<script nonce='%s'>document.body.addEventListener('load', reloadData());</script>", $_SESSION['nonce']);
-	} else {
-		printf("<script nonce='%s'>document.body.addEventListener('load', loadData());</script>", $_SESSION['nonce']);
-	}
+	printf("<script nonce='%s'>document.body.addEventListener('load', loadData());</script>", $_SESSION['nonce']);
 }
 
 

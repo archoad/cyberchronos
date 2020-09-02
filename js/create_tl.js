@@ -14,12 +14,5 @@ let chronos = null;
 
 function loadData() {
 	chronos = new TL.Timeline('timeline', './data/data.json', chronosOptions);
-}
-
-
-function reloadData() {
-	chronos = null;
-	document.location.reload(true);
-	chronos = new TL.Timeline('timeline', './data/data.json', chronosOptions);
-	console.log(chronos._el.storyslider);
+	//console.log(chronos._el.storyslider);
 }

@@ -37,20 +37,20 @@ session_set_cookie_params([
 session_start();
 if (isset($_POST['captcha'])) {
 	if (validateCaptcha($_POST['captcha'])) {
+		headPage();
 		computeEvents($_POST);
 		genJsonFile();
-		headPage();
-		displayTimeline(true);
+		displayTimeline();
 		addEvent();
 		footPage();
 	} else {
 		destroySession();
 	}
 } else {
+	headPage();
 	isTherEventsForThisyear();
 	genJsonFile();
-	headPage();
-	displayTimeline(false);
+	displayTimeline();
 	addEvent();
 	footPage();
 }

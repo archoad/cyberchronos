@@ -13,3 +13,9 @@ function displayAddModal() {
 		}
 	}
 }
+
+
+function refreshPage() {
+	window.location = self.location;
+	document.location.reload(true);
+}
